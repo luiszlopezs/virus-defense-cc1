@@ -1,0 +1,9 @@
+*.o
+*.exe
+*.out
+engine/build/
+__pycache__/
+*.pyc
+.venv/
+.vscode/
+.idea/
