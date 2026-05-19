@@ -1,0 +1,9 @@
+{
+  "turn": 0,
+  "score": 0,
+  "budget": 3,
+  "grid": [],
+  "infection_history": [],
+  "greedy_suggestion": {"row": -1, "col": -1},
+  "backtracking_perimeter": []
+}
