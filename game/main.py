@@ -1,4 +1,4 @@
-from algorithms.grid import Grid, VIRUS, PROTEGIDO
+from algorithms.grid import Grid, VIRUS, PATCHED
 from algorithms.greedy import greedy_suggestion
 from algorithms.backtracking import backtracking_suggestion
 
@@ -23,7 +23,7 @@ def display(grid, player):
                 row += "J "
             elif grid.get_cell(i, j) == VIRUS:
                 row += "X "
-            elif grid.get_cell(i, j) == PROTEGIDO:
+            elif grid.get_cell(i, j) == PATCHED:
                 row += "P "
             elif (i, j) == (grid.rows - 1, grid.cols - 1):
                 row += "F "
@@ -59,7 +59,7 @@ def play(grid):
         method = "none"
 
     while True:
-        print("\n" + "="*40)
+        print("\n" + "="*40) # This separator is only for console readability and isn't part of the core game logic.
         display(grid, player)
 
         neighbors = grid.get_neighbors(player[0], player[1])

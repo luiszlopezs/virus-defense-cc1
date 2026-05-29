@@ -1,9 +1,9 @@
 import random
 
 # CONSTANTS:
-VACIO = 0
+HEALTHY = 0
 VIRUS = 1
-PROTEGIDO = 2
+PATCHED = 2
 
 
 class Grid:
@@ -18,11 +18,11 @@ class Grid:
         Cell values:
         0 = Empty
         1 = Virus
-        2 = Protected zone
+        2 = Patched node (protected zone)
         """
         self.rows = rows
         self.cols = cols
-        self.matrix = [[VACIO for _ in range(cols)] for _ in range(rows)]
+        self.matrix = [[HEALTHY for _ in range(cols)] for _ in range(rows)]
 
     def is_inside(self, row: int, col: int) -> bool:
         """
@@ -104,7 +104,7 @@ class Grid:
             if (r, c) in path_set:
                 continue
 
-            if self.get_cell(r, c) == VACIO:
+            if self.get_cell(r, c) == HEALTHY:
                 self.set_cell(r, c, VIRUS)
                 placed += 1
 
@@ -120,6 +120,6 @@ class Grid:
         while placed < count:
             r, c = random.choice(path)
 
-            if self.get_cell(r, c) == VACIO:
-                self.set_cell(r, c, PROTEGIDO)
+            if self.get_cell(r, c) == HEALTHY:
+                self.set_cell(r, c, PATCHED)
                 placed += 1
