@@ -1,54 +1,48 @@
-from algorithms.grid import VIRUS
+"""Greedy local suggestion for Virus Defense."""
 
-def greedy_suggestion(grid, player: tuple) -> tuple[int, int] | None:
+from __future__ import annotations
+
+try:  # Supports both: python game/main.py and python -m game.main
+    from algorithms.grid_utils import GRID_SIZE, HEALTHY, get_cell, get_degree, get_neighbors
+except ImportError:  # pragma: no cover - fallback for package execution
+    from game.algorithms.grid_utils import GRID_SIZE, HEALTHY, get_cell, get_degree, get_neighbors
+
+
+def get_greedy_suggestion(grid: object, current_pos: tuple[int, int]) -> tuple[int, int] | None:
     """
-    Suggests the next move using a greedy strategy based on connectivity.
+    Select the best HEALTHY neighbor using a local Greedy criterion.
 
-    This implementation follows the idea:
-    "patch the most connected vulnerable node first",
-    adapted to a grid-based interactive game.
+    The algorithm only evaluates the current player's immediate neighbors, so it
+    is O(1): at most four candidates are inspected in a rectangular grid.
 
-    Strategy:
-    - Evaluate only neighboring cells (local decision).
-    - Avoid virus cells (unsafe nodes).
-    - For each valid neighbor, count how many SAFE connections it has.
-    - Select the neighbor with the highest number of safe connections.
-    - If there is a tie, return the first encountered.
-    - Return None if no safe moves are available.
+    Priority:
+    1. Candidate must be HEALTHY.
+    2. Higher geometric degree is better.
+    3. Tie-breaker: closest to the center of the 12x12 board.
+    4. If the tie persists, the first candidate found is kept.
 
-    Instead of selecting a global node, we adapted the greedy strategy to 
-    a local decision-making process, selecting the most connected neighboring 
-    node to maintain interactivity.
-
-    Parameters:
-    grid (Grid): The game board.
-    player (tuple): Current position of the player (row, col).
-
-    Returns:
-    tuple[int, int] | None: Suggested next move or None if no valid move exists.
+    This local version keeps the game interactive and avoids letting the player
+    jump to a globally optimal but narratively disconnected node.
     """
+    center = ((GRID_SIZE - 1) / 2, (GRID_SIZE - 1) / 2)
+    best_node: tuple[int, int] | None = None
+    best_key: tuple[int, float] | None = None
 
-    # Get neighboring positions (possible moves)
-    neighbors = grid.get_neighbors(player[0], player[1])
-
-    best_move = None
-    max_connections = -1
-
-    for (r, c) in neighbors:
-
-        # Skip virus cells (unsafe)
-        if grid.get_cell(r, c) == VIRUS:
+    for row, col in get_neighbors(grid, current_pos[0], current_pos[1]):
+        if get_cell(grid, row, col) != HEALTHY:
             continue
 
-        # Count SAFE connections (non-virus neighbors)
-        safe_connections = 0
-        for (nr, nc) in grid.get_neighbors(r, c):
-            if grid.get_cell(nr, nc) != VIRUS:
-                safe_connections += 1
+        degree = get_degree(row, col, GRID_SIZE)
+        distance_to_center = abs(row - center[0]) + abs(col - center[1])
+        candidate_key = (degree, -distance_to_center)
 
-        # Select the node with the highest connectivity
-        if safe_connections > max_connections:
-            max_connections = safe_connections
-            best_move = (r, c)
+        if best_key is None or candidate_key > best_key:
+            best_key = candidate_key
+            best_node = (row, col)
 
-    return best_move
+    return best_node
+
+
+# Backward-compatible name used by the original console prototype.
+def greedy_suggestion(grid: object, player: tuple[int, int]) -> tuple[int, int] | None:
+    return get_greedy_suggestion(grid, player)
