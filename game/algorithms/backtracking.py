@@ -1,5 +1,5 @@
-from game.algorithms.grid_utils import get_boundary_nodes
-from game.algorithms.grid import VIRUS, HEALTHY
+from algorithms.grid_utils import get_boundary_nodes
+from algorithms.grid import VIRUS, HEALTHY
 
 # =========================
 # CHECK IF -CLUSTER- IS CONTAINED
@@ -112,3 +112,40 @@ def get_quarantine_perimeter(grid) -> list[tuple]:
     backtrack(0, set())
 
     return list(best_solution) if best_solution else []
+
+# =========================
+# SUGGESTION FUNCTION (INTERFACE FOR GAME)
+# =========================
+def backtracking_suggestion(grid, player):
+    """
+    Provides the next move suggestion using the backtracking strategy.
+
+    This function acts as the interface between the game loop
+    and the backtracking algorithm.
+
+    Steps:
+    1. Compute the optimal quarantine perimeter.
+    2. Select the closest node from that perimeter to the player.
+
+    The distance used is Manhattan distance.
+
+    Returns:
+        tuple[int, int] | None
+    """
+
+    perimeter = get_quarantine_perimeter(grid)
+
+    if not perimeter:
+        return None
+
+    best_node = None
+    min_distance = float("inf")
+
+    for r, c in perimeter:
+        distance = abs(r - player[0]) + abs(c - player[1])
+
+        if distance < min_distance:
+            min_distance = distance
+            best_node = (r, c)
+
+    return best_node
