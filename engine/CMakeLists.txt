@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_library(virus_engine STATIC
+add_executable(virus_engine
     src/main.cpp
     src/LinkedList.cpp
     src/BST.cpp
