@@ -1,26 +1,96 @@
-<<<<<<< HEAD
-"""Bounded backtracking quarantine perimeter for Virus Defense."""
-=======
-from algorithms.grid_utils import get_boundary_nodes
-from algorithms.grid import VIRUS, HEALTHY
->>>>>>> f5ca04229a493488b64acb04988893146be396e1
+"""Backtracking safe-path search for Virus Defense."""
 
 from __future__ import annotations
 
-try:
-    from algorithms.grid_utils import HEALTHY, INFECTED, get_boundary_nodes, get_cell, get_neighbors, rows_cols
+try:  # Supports both: python game/main.py and python -m game.main
+    from algorithms.grid_utils import GRID_SIZE, HEALTHY, INFECTED, PATCHED, get_boundary_nodes, get_cell, get_neighbors, is_inside, rows_cols
 except ImportError:  # pragma: no cover
-    from game.algorithms.grid_utils import HEALTHY, INFECTED, get_boundary_nodes, get_cell, get_neighbors, rows_cols
+    from game.algorithms.grid_utils import GRID_SIZE, HEALTHY, INFECTED, PATCHED, get_boundary_nodes, get_cell, get_neighbors, is_inside, rows_cols
+
+Position = tuple[int, int]
 
 
-def is_cluster_contained(grid: object, perimeter: set[tuple[int, int]]) -> bool:
+def is_walkable(grid: object, row: int, col: int) -> bool:
+    """A safe route may pass through healthy or patched nodes, but never infected nodes."""
+    return is_inside(grid, row, col) and get_cell(grid, row, col) in (HEALTHY, PATCHED)
+
+
+def _ordered_neighbors(grid: object, current: Position, goal: Position) -> list[Position]:
+    """Return valid neighbors ordered by proximity to the goal to reduce branching.
+    Instead of exploring random or fixed paths (like always going left first even 
+    if the goal is to the right), the algorithm prioritizes the nodes that essentially 
+    bring you closer to the objective."""
+    neighbors = [node for node in get_neighbors(grid, current[0], current[1]) if is_walkable(grid, node[0], node[1])]
+    neighbors.sort(key=lambda node: abs(node[0] - goal[0]) + abs(node[1] - goal[1]))
+    return neighbors
+
+
+def find_safe_path(grid: object, start: Position, goal: Position) -> list[Position]:
     """
-    Return True if infected nodes have no HEALTHY neighbor outside perimeter.
+    Find a safe route from the player's current node to the goal using Backtracking.
+
+    The algorithm recursively explores possible movements. If a branch reaches a
+    dead end, it removes the last node from the partial path and returns to the
+    previous decision point to try another neighbor. This is the core
+    backtracking behavior.
+
+    Rules:
+    - Movement is orthogonal only: up, down, left, right.
+    - INFECTED nodes are forbidden.
+    - HEALTHY and PATCHED nodes are walkable.
+    - Each node is visited at most once in the current search path to avoid
+      cycles.
+
+    Returns a list including start and goal when a route exists, or an empty
+    list when the board is blocked.
     """
     rows, cols = rows_cols(grid)
+    if not (0 <= start[0] < rows and 0 <= start[1] < cols):
+        return []
+    if not (0 <= goal[0] < rows and 0 <= goal[1] < cols):
+        return []
+    if not is_walkable(grid, start[0], start[1]) or not is_walkable(grid, goal[0], goal[1]):
+        return []
 
-    for row in range(rows):
-        for col in range(cols):
+    visited: set[Position] = set()
+    path: list[Position] = []
+
+    def dfs(node: Position) -> bool:
+        if node in visited:
+            return False
+        if not is_walkable(grid, node[0], node[1]):
+            return False
+
+        visited.add(node)
+        path.append(node)
+
+        if node == goal:
+            return True
+
+        for nxt in _ordered_neighbors(grid, node, goal):
+            if dfs(nxt):
+                return True
+
+        # Dead end: remove the node and return to the previous branch.
+        path.pop() #If a path encounters a virus wall (INFECTED), it pops the last node from the stack and cleanly returns to the previous decision point to try another path.
+        return False
+
+    if dfs(start):
+        return path.copy()
+    return []
+
+
+def next_step_from_path(path: list[Position]) -> Position | None:
+    """Return the immediate movement suggested by a safe path."""
+    if len(path) < 2:
+        return None
+    return path[1]
+
+
+# Legacy quarantine helpers kept for compatibility with earlier reports/tests.
+def is_cluster_contained(grid: object, perimeter: set[Position]) -> bool:
+    for row in range(GRID_SIZE):
+        for col in range(GRID_SIZE):
             if get_cell(grid, row, col) != INFECTED:
                 continue
             for nr, nc in get_neighbors(grid, row, col):
@@ -29,88 +99,39 @@ def is_cluster_contained(grid: object, perimeter: set[tuple[int, int]]) -> bool:
     return True
 
 
-def get_quarantine_perimeter(grid: object, limit: int = 12) -> list[tuple[int, int]]:
+def get_quarantine_perimeter(grid: object, limit: int = 12) -> list[Position]:
     """
-    Find a small perimeter around the infection using bounded backtracking.
+    Compatibility function from the previous design.
 
-    The exact search over all boundary-node subsets is exponential. To keep the
-    UI responsive in a 12x12 board, the candidate list is capped at 12 nodes,
-    which means at most 2^12 = 4096 subsets are explored.
+    The current game logic uses find_safe_path() for Backtracking. This perimeter
+    function remains available so older tests or documentation examples do not
+    crash, but the UI no longer uses it as the main Backtracking behavior.
     """
-    boundary_nodes = get_boundary_nodes(grid)
+    boundary_nodes = get_boundary_nodes(grid)[:limit]
     if not boundary_nodes:
         return []
 
-    boundary_nodes = boundary_nodes[:limit]
-    best_solution: set[tuple[int, int]] | None = None
+    best: set[Position] | None = None
 
-    def backtrack(index: int, current: set[tuple[int, int]]) -> None:
-        nonlocal best_solution
-
-        if best_solution is not None and len(current) >= len(best_solution):
+    def search(index: int, current: set[Position]) -> None:
+        nonlocal best
+        if best is not None and len(current) >= len(best):
             return
-
         if is_cluster_contained(grid, current):
-            best_solution = set(current)
+            best = set(current)
             return
-
         if index >= len(boundary_nodes):
             return
 
-        node = boundary_nodes[index]
+        current.add(boundary_nodes[index])
+        search(index + 1, current)
+        current.remove(boundary_nodes[index])
+        search(index + 1, current)
 
-        current.add(node)
-        backtrack(index + 1, current)
+    search(0, set())
+    return list(best) if best is not None else []
 
-        current.remove(node)
-        backtrack(index + 1, current)
 
-    backtrack(0, set())
-    return list(best_solution) if best_solution else []
-
-<<<<<<< HEAD
-
-# Backward-compatible name used by the original console prototype.
-def backtracking_suggestion(grid: object, player: tuple[int, int] | None = None) -> tuple[int, int] | None:
-    perimeter = get_quarantine_perimeter(grid)
-    return perimeter[0] if perimeter else None
-=======
-    return list(best_solution) if best_solution else []
-
-# =========================
-# SUGGESTION FUNCTION (INTERFACE FOR GAME)
-# =========================
-def backtracking_suggestion(grid, player):
-    """
-    Provides the next move suggestion using the backtracking strategy.
-
-    This function acts as the interface between the game loop
-    and the backtracking algorithm.
-
-    Steps:
-    1. Compute the optimal quarantine perimeter.
-    2. Select the closest node from that perimeter to the player.
-
-    The distance used is Manhattan distance.
-
-    Returns:
-        tuple[int, int] | None
-    """
-
-    perimeter = get_quarantine_perimeter(grid)
-
-    if not perimeter:
-        return None
-
-    best_node = None
-    min_distance = float("inf")
-
-    for r, c in perimeter:
-        distance = abs(r - player[0]) + abs(c - player[1])
-
-        if distance < min_distance:
-            min_distance = distance
-            best_node = (r, c)
-
-    return best_node
->>>>>>> f5ca04229a493488b64acb04988893146be396e1
+# Backward-compatible console name.
+def backtracking_suggestion(grid: object, player: Position, goal: Position | None = None) -> list[Position]:
+    return find_safe_path(grid, player, goal or (GRID_SIZE - 1, GRID_SIZE - 1))

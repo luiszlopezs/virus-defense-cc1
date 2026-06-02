@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 """
 Utilities for the Virus Defense grid.
 
@@ -143,30 +142,3 @@ def find_first_healthy(grid: object, preferred: Position | None = None) -> Posit
 
 def positions_to_json(nodes: Iterable[Position]) -> list[dict[str, int]]:
     return [{"row": row, "col": col} for row, col in nodes]
-=======
-from algorithms.grid import VIRUS, HEALTHY
-
-def get_boundary_nodes(grid):
-    """
-    Returns a list of boundary nodes.
-
-    A boundary node is a HEALTHY node that is adjacent
-    to at least one VIRUS node.
-
-    These nodes represent the frontier between infection
-    and safe zones.
-    """
-    boundary = []
-
-    for r in range(grid.rows):
-        for c in range(grid.cols):
-            if grid.get_cell(r, c) == HEALTHY:
-                neighbors = grid.get_neighbors(r, c)
-
-                for nr, nc in neighbors:
-                    if grid.get_cell(nr, nc) == VIRUS:
-                        boundary.append((r, c))
-                        break
-
-    return boundary
->>>>>>> f5ca04229a493488b64acb04988893146be396e1

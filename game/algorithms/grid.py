@@ -86,27 +86,29 @@ class Grid:
             path.append((i, j))
 
         return path
-
-    def spawn_random_viruses(self, count: int, path): #generate viruses in random positions, but not in the path
+    def spawn_initial_virus_cluster(self, expansion_steps: int, path: list[tuple[int, int]]):
         """
-        Randomly places a given number of viruses on the board.
-
-        Viruses are NOT placed on the safe path to guarantee
-        that at least one valid solution exists.
+        Selects a single random starting point (Patient Zero) outside the safe path,
+        and expands it for a given number of steps to create a dense initial virus cluster.
+        
+        This allows the Greedy patcher to effectively find high-risk boundaries and
+        the Backtracking pathfinder to map routes around a unified threat.
         """
         path_set = set(path)
-        placed = 0
+        patient_zero = None
 
-        while placed < count:
+        # Find a single valid random spot for Patient Zero:
+        while patient_zero is None:
             r = random.randint(0, self.rows - 1)
             c = random.randint(0, self.cols - 1)
 
-            if (r, c) in path_set:
-                continue
-
-            if self.get_cell(r, c) == HEALTHY:
+            if (r, c) not in path_set and self.get_cell(r, c) == HEALTHY:
+                patient_zero = (r, c)
                 self.set_cell(r, c, VIRUS)
-                placed += 1
+
+        # Grow the cluster locally before the game session starts:
+        for _ in range(expansion_steps):
+            self.expand_virus()
 
     def spawn_random_protected_zones(self, count: int, path):
         """
@@ -123,3 +125,27 @@ class Grid:
             if self.get_cell(r, c) == HEALTHY:
                 self.set_cell(r, c, PATCHED)
                 placed += 1
+                
+    def expand_virus(self, infection_chance: float = 0.35):
+        """
+        Spreads the virus into adjacent healthy nodes based on a probability check.
+        PATCHED nodes act as physical barriers and block this expansion.
+        
+        Parameters:
+        infection_chance (float): Value between 0.0 and 1.0 (e.g., 0.35 = 35% chance to spread).
+        """
+        infected_nodes = []
+        
+        # Locate all current virus outbreak positions on the board:
+        for r in range(self.rows):
+            for c in range(self.cols):
+                if self.matrix[r][c] == VIRUS:
+                    infected_nodes.append((r, c))
+        
+        # Contaminate orthogonal healthy neighbors based on probability:
+        for r, c in infected_nodes:
+            for nr, nc in self.get_neighbors(r, c):
+                if self.matrix[nr][nc] == HEALTHY:
+                    # Only infect if the random roll is less than the chance threshold
+                    if random.random() < infection_chance:
+                        self.matrix[nr][nc] = VIRUS
