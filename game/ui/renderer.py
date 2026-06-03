@@ -2,7 +2,7 @@
 Virus Defense — Premium Pygame Renderer
 ========================================
 Renders the 12x12 network grid with animated effects, HUD sidebar,
-greedy/backtracking visual hints, and game state overlay screens.
+and game state overlay screens.
 
 Author: Alicia Pineda Quiroga (UI Developer)
 """
@@ -46,6 +46,7 @@ class Renderer:
     GREEDY_GOLD = (255, 210, 0)
     BACKTRACK_BLUE = (70, 130, 255)
     SELECTION_WHITE = (255, 255, 255)
+    GOAL_CYAN = (0, 220, 255)
 
     TEXT_PRIMARY = (225, 230, 240)
     TEXT_SECONDARY = (130, 145, 170)
@@ -163,13 +164,7 @@ class Renderer:
                     self._draw_glow(cx, cy, (255, 70, 50), alpha, pulse_radius + 4)
 
     def draw_greedy_hint(self, row, col):
-        if row < 0 or col < 0:
-            return
-        cx, cy = self._node_center(row, col)
-        self._draw_glow(cx, cy, self.GREEDY_GOLD, 50, self.NODE_RADIUS + 12)
-        pygame.draw.circle(self.screen, self.GREEDY_GOLD, (cx, cy), self.NODE_RADIUS + 4, 3)
-        txt = self.font_tiny.render("*", True, self.GREEDY_GOLD)
-        self.screen.blit(txt, (cx - txt.get_width() // 2, cy - self.NODE_RADIUS - 12))
+        pass
 
     def draw_backtracking_preview(self, nodes):
         if not nodes:
@@ -190,6 +185,35 @@ class Renderer:
                                        (self.NODE_RADIUS + 5) * 2, (self.NODE_RADIUS + 5) * 2)
                     pygame.draw.arc(self.screen, self.BACKTRACK_BLUE, rect, start_angle, end_angle, 2)
 
+    def draw_safe_path(self, nodes):
+        if not nodes or len(nodes) < 2:
+            return
+        tick = pygame.time.get_ticks()
+        SAFE_GREEN = (0, 255, 120)
+        # Draw line connecting path cells
+        points = []
+        for node in nodes:
+            r, c = node.get("row", -1), node.get("col", -1)
+            if r < 0 or c < 0:
+                continue
+            cx, cy = self._node_center(r, c)
+            points.append((cx, cy))
+        if len(points) >= 2:
+            # Glow line
+            for i in range(len(points) - 1):
+                pygame.draw.line(self.screen, SAFE_GREEN, points[i], points[i + 1], 5)
+            # Bright core line
+            for i in range(len(points) - 1):
+                pygame.draw.line(self.screen, (180, 255, 200), points[i], points[i + 1], 2)
+        # Glow on each path cell
+        for node in nodes:
+            r, c = node.get("row", -1), node.get("col", -1)
+            if r < 0 or c < 0:
+                continue
+            cx, cy = self._node_center(r, c)
+            alpha = int(35 + 25 * math.sin(tick * 0.004))
+            self._draw_glow(cx, cy, SAFE_GREEN, alpha, self.NODE_RADIUS + 6)
+
     def draw_node_flash(self, row, col):
         cx, cy = self._node_center(row, col)
         self._draw_glow(cx, cy, (255, 255, 255), 150, self.NODE_RADIUS + 4)
@@ -198,14 +222,46 @@ class Renderer:
         if row < 0 or col < 0:
             return
         cx, cy = self._node_center(row, col)
-        pygame.draw.circle(self.screen, self.SELECTION_WHITE, (cx, cy), self.NODE_RADIUS + 3, 2)
         tick = pygame.time.get_ticks()
-        alpha = int(40 + 30 * math.sin(tick * 0.004))
-        self._draw_glow(cx, cy, (255, 255, 255), alpha, self.NODE_RADIUS + 8)
+        # Pulsing glow
+        alpha = int(60 + 40 * math.sin(tick * 0.005))
+        self._draw_glow(cx, cy, (255, 255, 255), alpha, self.NODE_RADIUS + 12)
+        # White ring
+        pygame.draw.circle(self.screen, self.SELECTION_WHITE, (cx, cy), self.NODE_RADIUS + 4, 3)
+        # Inner triangle (directional indicator)
+        s = 7
+        pygame.draw.polygon(self.screen, self.SELECTION_WHITE, [
+            (cx, cy - s), (cx - s, cy + s // 2), (cx + s, cy + s // 2)
+        ])
+        # "P" label
+        txt = self.font_tiny.render("P", True, self.SELECTION_WHITE)
+        self.screen.blit(txt, (cx - txt.get_width() // 2, cy - self.NODE_RADIUS - 14))
 
-    def draw_hud(self, turn, budget, score, danger_level, greedy_hint,
-                 greedy_cost, bt_size, bt_cooldown, infected_count=0,
-                 bt_preview_active=False, reinforce_cooldown=0):
+    def draw_goal_marker(self, row, col):
+        if row < 0 or col < 0:
+            return
+        cx, cy = self._node_center(row, col)
+        tick = pygame.time.get_ticks()
+        # Pulsing cyan glow — bigger and faster
+        alpha = int(70 + 50 * math.sin(tick * 0.005))
+        self._draw_glow(cx, cy, self.GOAL_CYAN, alpha, self.NODE_RADIUS + 14)
+        # 6-pointed star
+        import math as _m
+        outer = self.NODE_RADIUS + 4
+        inner = outer * 0.5
+        points = []
+        for i in range(6):
+            angle = _m.radians(60 * i - 90)
+            points.append((cx + outer * _m.cos(angle), cy + outer * _m.sin(angle)))
+            angle2 = _m.radians(60 * i - 60)
+            points.append((cx + inner * _m.cos(angle2), cy + inner * _m.sin(angle2)))
+        pygame.draw.polygon(self.screen, self.GOAL_CYAN, points, 3)
+        # "GOAL" label below
+        txt = self.font_tiny.render("GOAL", True, self.GOAL_CYAN)
+        self.screen.blit(txt, (cx - txt.get_width() // 2, cy + self.NODE_RADIUS + 6))
+
+    def draw_hud(self, turn, budget, danger_level, greedy_cost,
+                 bt_cooldown, infected_count=0):
         sx = self.SIDEBAR_X
         sw = self.SIDEBAR_WIDTH
         y = 20
@@ -249,42 +305,7 @@ class Renderer:
 
         y = stat_card("Turno", turn, self.TEXT_PRIMARY, y)
         y = stat_card("Presupuesto", f"{budget} pts", self.SUCCESS_GREEN, y)
-        y = stat_card("Puntos", score, self.ACCENT_PURPLE, y)
         y = stat_card("Infectados", infected_count, self.DANGER_RED, y)
-
-        # ── Victory Progress ──
-        y += 4
-        total = GRID_SIZE * GRID_SIZE
-        clean = total - infected_count
-        pct = clean / total if total > 0 else 1.0
-        obj_label = self.font_small.render("Progreso victoria", True, self.TEXT_SECONDARY)
-        self.screen.blit(obj_label, (sx + 14, y))
-        y += 16
-        prog_bg = pygame.Rect(sx + 14, y, sw - 28, 10)
-        self._draw_rounded_rect(prog_bg, (25, 30, 45), 255, 5)
-        prog_w = int((sw - 28) * pct)
-        if prog_w > 0:
-            prog_fill = pygame.Rect(sx + 14, y, prog_w, 10)
-            if pct >= 1.0:
-                prog_color = self.SUCCESS_GREEN
-            elif pct >= 0.7:
-                prog_color = (80, 200, 120)
-            elif pct >= 0.4:
-                prog_color = (220, 180, 40)
-            else:
-                prog_color = self.DANGER_RED
-            self._draw_rounded_rect(prog_fill, prog_color, 255, 5)
-        y += 14
-        pct_text = self.font_tiny.render(f"{clean}/{total} celdas limpias", True, self.TEXT_MUTED)
-        self.screen.blit(pct_text, (sx + (sw - pct_text.get_width()) // 2, y))
-        y += 14
-        if infected_count == 0:
-            win_txt = self.font_small.render("Sin virus! Victoria!", True, self.SUCCESS_GREEN)
-            self.screen.blit(win_txt, (sx + (sw - win_txt.get_width()) // 2, y))
-        else:
-            obj_txt = self.font_tiny.render("Contén el virus con parches", True, self.TEXT_MUTED)
-            self.screen.blit(obj_txt, (sx + (sw - obj_txt.get_width()) // 2, y))
-        y += 16
 
         # ── Danger Meter ──
         y += 4
@@ -323,27 +344,6 @@ class Renderer:
             bt_color = self.SUCCESS_GREEN
         y = stat_card("Backtracking", bt_text, bt_color, y)
 
-        # Reinforce
-        if reinforce_cooldown > 0:
-            rf_text = f"Enfriando ({reinforce_cooldown})"
-            rf_color = self.COOLDOWN_CYAN
-        else:
-            rf_text = "Listo"
-            rf_color = self.SUCCESS_GREEN
-        y = stat_card("Reforzar", rf_text, rf_color, y)
-
-        if bt_size > 0:
-            y = stat_card("Costo BT", f"{bt_size} pts", self.BACKTRACK_BLUE, y)
-
-        # Greedy hint
-        if greedy_hint and greedy_hint[0] >= 0 and greedy_hint[1] >= 0:
-            hint_txt = f"({greedy_hint[0]}, {greedy_hint[1]})"
-            hint_color = self.GREEDY_GOLD
-        else:
-            hint_txt = "---"
-            hint_color = self.TEXT_MUTED
-        y = stat_card("Sugerencia", hint_txt, hint_color, y)
-
         # ── Divider ──
         y += 4
         pygame.draw.line(self.screen, (35, 45, 65), (sx + 10, y), (sx + sw - 10, y))
@@ -355,10 +355,11 @@ class Renderer:
         y += 18
 
         controls = [
+            ("Flechas", "Mover jugador"),
             ("Click", "Parchear (1 pt)"),
-            ("Shift+Click", "Reforzar (3 pts)"),
             ("G", f"Greedy ({greedy_cost} pts)"),
-            ("B", "Backtracking"),
+            ("B", "Ver perimeter BT"),
+            ("H", "Ver camino seguro"),
             ("N", "Pasar turno"),
             ("R", "Reiniciar"),
             ("ESC", "Salir"),
@@ -380,17 +381,6 @@ class Renderer:
             self.screen.blit(desc_surf, (sx + 14 + key_w + 6, y + 1))
             y += 18
 
-        # ── Backtracking Preview Confirmation ──
-        if bt_preview_active:
-            y += 4
-            pygame.draw.line(self.screen, (35, 45, 65), (sx + 10, y), (sx + sw - 10, y))
-            y += 6
-            confirm = self.font_small.render("B para confirmar", True, self.GREEDY_GOLD)
-            self.screen.blit(confirm, (sx + (sw - confirm.get_width()) // 2, y))
-            y += 16
-            cancel = self.font_small.render("Click para cancelar", True, self.TEXT_MUTED)
-            self.screen.blit(cancel, (sx + (sw - cancel.get_width()) // 2, y))
-
     def draw_tooltip(self, row, col, degree):
         cx, cy = self._node_center(row, col)
         txt = self.font_tiny.render(f"({row},{col}) d={degree}", True, self.TEXT_PRIMARY)
@@ -398,7 +388,7 @@ class Renderer:
         self._draw_rounded_rect(bg_rect, (18, 22, 36), 230, 5, (50, 60, 90))
         self.screen.blit(txt, (bg_rect.x + 5, bg_rect.y + 3))
 
-    def draw_game_over(self, score):
+    def draw_game_over(self, turns):
         overlay = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 190))
         self.screen.blit(overlay, (0, 0))
@@ -413,8 +403,8 @@ class Renderer:
         title = self.font_overlay.render("GAME OVER", True, self.DANGER_RED)
         self.screen.blit(title, ((self.width - title.get_width()) // 2, self.height // 2 - 65))
 
-        score_txt = self.font_overlay_sub.render(f"Puntos Finales: {score}", True, self.TEXT_PRIMARY)
-        self.screen.blit(score_txt, ((self.width - score_txt.get_width()) // 2, self.height // 2))
+        turn_txt = self.font_overlay_sub.render(f"Turnos jugados: {turns}", True, self.TEXT_PRIMARY)
+        self.screen.blit(turn_txt, ((self.width - turn_txt.get_width()) // 2, self.height // 2))
 
         inst = self.font_hud.render("R para reiniciar  |  ESC para salir", True, self.TEXT_SECONDARY)
         self.screen.blit(inst, ((self.width - inst.get_width()) // 2, self.height // 2 + 35))
@@ -431,7 +421,7 @@ class Renderer:
                              (i, i, self.width - i * 2, self.height - i * 2), 2)
         self.screen.blit(vignette, (0, 0))
 
-        title = self.font_overlay.render("RED PROTEGIDA!", True, self.SUCCESS_GREEN)
+        title = self.font_overlay.render("VICTORIA!", True, self.SUCCESS_GREEN)
         self.screen.blit(title, ((self.width - title.get_width()) // 2, self.height // 2 - 65))
 
         turn_txt = self.font_overlay_sub.render(f"Completado en {turn} turnos", True, self.TEXT_PRIMARY)

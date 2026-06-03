@@ -32,9 +32,16 @@ public:
     int budget;
     int greedy_cost;
     int backtracking_cooldown;
-    int reinforce_cooldown;
     LinkedList infection_history;
     BST bst;
+
+    // Player and goal positions
+    int player_row, player_col;
+    int goal_row, goal_col;
+
+    // Flags set after virus spreads
+    bool player_infected;
+    bool goal_infected;
 
     // Cache for the backtracking perimeter so it can be written to state.json
     Point backtracking_perimeter[144];

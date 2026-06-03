@@ -7,7 +7,6 @@
 #include <thread>
 
 // extractField: Searches for a JSON string field "key": "value" and returns the value.
-// Returns "" if not found.
 static std::string extractField(const std::string& json, const std::string& key) {
     std::string needle = "\"" + key + "\"";
     size_t pos = json.find(needle);
@@ -29,7 +28,6 @@ static std::string extractField(const std::string& json, const std::string& key)
 }
 
 // extractInt: Searches for a JSON integer field "key": N and returns N.
-// Returns -1 if not found.
 static int extractInt(const std::string& json, const std::string& key) {
     std::string val = extractField(json, key);
     if (val.empty()) return -1;
@@ -44,7 +42,6 @@ int main() {
     std::cout << "Virus Engine started. Waiting for actions in shared/input.json..." << std::endl;
 
     while (true) {
-        // Read action from input.json
         std::ifstream file("shared/input.json");
         if (file.is_open()) {
             std::string content((std::istreambuf_iterator<char>(file)),
@@ -62,26 +59,20 @@ int main() {
                 break;
             }
 
-            // Only progress the game if the action is a valid player command (not "idle")
-            if (action != "idle" && (action == "patch" || action == "reinforce" ||
-                                     action == "greedy" || action == "backtracking" ||
-                                     action == "none")) {
+            if (action != "idle" && (action == "patch" || action == "greedy" ||
+                                     action == "backtracking" || action == "none")) {
 
                 std::cout << "Processing action: " << action
                           << " on target (" << row << ", " << col << ")" << std::endl;
 
-                // 1. Decrement cooldowns at the start of the turn
+                // 1. Decrement cooldowns
                 if (engine.backtracking_cooldown > 0) {
                     engine.backtracking_cooldown--;
-                }
-                if (engine.reinforce_cooldown > 0) {
-                    engine.reinforce_cooldown--;
                 }
 
                 // 2. Map action to code and apply
                 int action_code = 0;
                 if (action == "patch") action_code = 1;
-                else if (action == "reinforce") action_code = 2;
                 else if (action == "greedy") action_code = 3;
                 else if (action == "backtracking") action_code = 4;
 
@@ -94,13 +85,13 @@ int main() {
 
                 // 4. Progress turn and increment budget
                 engine.turn++;
-                engine.budget += 4;
+                engine.budget += 2;
 
                 // 5. Update score and save state
                 engine.calculateScore();
                 engine.writeStateJSON();
 
-                // 6. Reset input.json back to "idle" to wait for next action
+                // 6. Reset input.json to "idle"
                 std::ofstream out("shared/input.json");
                 if (out.is_open()) {
                     out << "{\n"
@@ -113,7 +104,6 @@ int main() {
             }
         }
 
-        // Sleep for 300ms to reduce CPU usage and synchronize IPC
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
     }
 

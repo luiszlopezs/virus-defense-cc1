@@ -9,7 +9,6 @@
 
 // ── Helpers for manual JSON parsing ──
 
-// extractField: Searches for a JSON string field "key": "value" and returns the value.
 static std::string extractField(const std::string& json, const std::string& key) {
     std::string needle = "\"" + key + "\"";
     size_t pos = json.find(needle);
@@ -30,11 +29,22 @@ static std::string extractField(const std::string& json, const std::string& key)
     return json.substr(pos, end - pos);
 }
 
-// extractInt: Searches for a JSON integer field "key": N and returns N.
 static int extractInt(const std::string& json, const std::string& key) {
     std::string val = extractField(json, key);
     if (val.empty()) return -1;
     try { return std::stoi(val); } catch (...) { return -1; }
+}
+
+// Manhattan distance helper
+static int manhattan(int r1, int c1, int r2, int c2) {
+    return abs(r1 - r2) + abs(c1 - c2);
+}
+
+// Check if position is on border (not corner)
+static bool isBorderNotCorner(int r, int c) {
+    bool onBorder = (r == 0 || r == GRID_SIZE - 1 || c == 0 || c == GRID_SIZE - 1);
+    bool isCorner = (r == 0 || r == GRID_SIZE - 1) && (c == 0 || c == GRID_SIZE - 1);
+    return onBorder && !isCorner;
 }
 
 // ── Constructor ──
@@ -45,13 +55,20 @@ GameEngine::GameEngine() {
     budget = 5;
     greedy_cost = 1;
     backtracking_cooldown = 0;
-    reinforce_cooldown = 0;
+    player_row = 0;
+    player_col = 0;
+    goal_row = 0;
+    goal_col = 0;
+    player_infected = false;
+    goal_infected = false;
     backtracking_perimeter_size = 0;
 }
 
-// initGrid: Initialise a 12x12 grid, set degrees, infect (5,5), and populate the BST
+// initGrid: Initialise grid with random player, goal, and virus positions
 void GameEngine::initGrid() {
     srand(time(NULL));
+    player_infected = false;
+    goal_infected = false;
 
     // 1. Initialise all nodes as healthy
     for (int r = 0; r < GRID_SIZE; r++) {
@@ -63,23 +80,129 @@ void GameEngine::initGrid() {
         }
     }
 
-    // 2. Compute degrees based on initial healthy neighbors (corners=2, edges=3, others=4)
+    // 2. Compute structural degrees
     for (int r = 0; r < GRID_SIZE; r++) {
         for (int c = 0; c < GRID_SIZE; c++) {
             grid[r][c].degree = calculateNodeDegree(r, c);
         }
     }
 
-    // 3. Set a random node to infected
-    int sr = rand() % GRID_SIZE;
-    int sc = rand() % GRID_SIZE;
-    grid[sr][sc].state = INFECTED;
-    infection_history.append(sr, sc, 0, "initial");
+    // 3. Generate player position on border (not corner)
+    int border_positions[40][2];
+    int border_count = 0;
+    for (int r = 0; r < GRID_SIZE; r++) {
+        for (int c = 0; c < GRID_SIZE; c++) {
+            if (isBorderNotCorner(r, c)) {
+                border_positions[border_count][0] = r;
+                border_positions[border_count][1] = c;
+                border_count++;
+            }
+        }
+    }
+    int pidx = rand() % border_count;
+    player_row = border_positions[pidx][0];
+    player_col = border_positions[pidx][1];
 
-    // 4. Update the degrees of the neighbors of the initial infected node
-    updateConnectivityDegrees(sr, sc);
+    // 4. Generate goal position on border, Manhattan >= 10 from player
+    goal_row = -1;
+    goal_col = -1;
+    for (int attempt = 0; attempt < 200; attempt++) {
+        int gidx = rand() % border_count;
+        int gr = border_positions[gidx][0];
+        int gc = border_positions[gidx][1];
+        if (manhattan(player_row, player_col, gr, gc) >= 10) {
+            goal_row = gr;
+            goal_col = gc;
+            break;
+        }
+    }
+    // Fallback: use far corner
+    if (goal_row == -1) {
+        if (player_row <= 5) goal_row = GRID_SIZE - 1; else goal_row = 0;
+        if (player_col <= 5) goal_col = GRID_SIZE - 1; else goal_col = 0;
+    }
 
-    // 5. Populate the BST with all healthy nodes and their computed degrees
+    // 5. Generate virus position in interior, Manhattan >= 6 from both player and goal
+    int virus_row = -1;
+    virus_row = -1;
+    int virus_col = -1;
+    for (int attempt = 0; attempt < 500; attempt++) {
+        int vr = 2 + rand() % (GRID_SIZE - 4); // rows 2-9
+        int vc = 2 + rand() % (GRID_SIZE - 4); // cols 2-9
+        if (manhattan(vr, vc, player_row, player_col) >= 6 &&
+            manhattan(vr, vc, goal_row, goal_col) >= 6) {
+            virus_row = vr;
+            virus_col = vc;
+            break;
+        }
+    }
+    // Fallback: center
+    if (virus_row == -1) {
+        virus_row = GRID_SIZE / 2;
+        virus_col = GRID_SIZE / 2;
+    }
+
+    grid[virus_row][virus_col].state = INFECTED;
+    infection_history.append(virus_row, virus_col, 0, "initial");
+
+    // 5b. Add 2 small outbreaks in different parts of the map
+    int outbreak_rows[3] = {virus_row, 0, 0};
+    int outbreak_cols[3] = {virus_col, 0, 0};
+    int outbreak_count = 1;
+
+    for (int b = 0; b < 2; b++) {
+        for (int attempt = 0; attempt < 200; attempt++) {
+            int br = 2 + rand() % (GRID_SIZE - 4);
+            int bc = 2 + rand() % (GRID_SIZE - 4);
+
+            // Must be far from player, goal, and other outbreaks
+            bool too_close = false;
+            if (manhattan(br, bc, player_row, player_col) < 5) too_close = true;
+            if (manhattan(br, bc, goal_row, goal_col) < 5) too_close = true;
+            for (int o = 0; o < outbreak_count; o++) {
+                if (manhattan(br, bc, outbreak_rows[o], outbreak_cols[o]) < 5) {
+                    too_close = true;
+                    break;
+                }
+            }
+            if (too_close) continue;
+
+            // Infect this cell
+            grid[br][bc].state = INFECTED;
+            infection_history.append(br, bc, 0, "outbreak");
+            outbreak_rows[outbreak_count] = br;
+            outbreak_cols[outbreak_count] = bc;
+            outbreak_count++;
+
+            // Try to infect one healthy neighbor
+            int dr4[] = {-1, 1, 0, 0};
+            int dc4[] = {0, 0, -1, 1};
+            // Shuffle directions
+            for (int i = 3; i > 0; i--) {
+                int j = rand() % (i + 1);
+                int tr = dr4[i]; dr4[i] = dr4[j]; dr4[j] = tr;
+                int tc = dc4[i]; dc4[i] = dc4[j]; dc4[j] = tc;
+            }
+            for (int d = 0; d < 4; d++) {
+                int nr = br + dr4[d];
+                int nc = bc + dc4[d];
+                if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE &&
+                    grid[nr][nc].state == HEALTHY) {
+                    grid[nr][nc].state = INFECTED;
+                    infection_history.append(nr, nc, 0, "outbreak");
+                    break;
+                }
+            }
+            break;
+        }
+    }
+
+    // 6. Update connectivity degrees for all infected nodes
+    for (int o = 0; o < outbreak_count; o++) {
+        updateConnectivityDegrees(outbreak_rows[o], outbreak_cols[o]);
+    }
+
+    // 7. Populate BST with all healthy nodes
     for (int r = 0; r < GRID_SIZE; r++) {
         for (int c = 0; c < GRID_SIZE; c++) {
             if (grid[r][c].state == HEALTHY) {
@@ -93,10 +216,8 @@ void GameEngine::initGrid() {
     budget = 5;
     greedy_cost = 1;
     backtracking_cooldown = 0;
-    reinforce_cooldown = 0;
 }
 
-// calculateNodeDegree: Returns the number of adjacent healthy cells
 int GameEngine::calculateNodeDegree(int r, int c) const {
     int count = 0;
     int dr[] = {-1, 1, 0, 0};
@@ -113,7 +234,6 @@ int GameEngine::calculateNodeDegree(int r, int c) const {
     return count;
 }
 
-// updateConnectivityDegrees: Decreases neighbors' connectivity degrees when a node becomes unhealthy
 void GameEngine::updateConnectivityDegrees(int row, int col) {
     int dr[] = {-1, 1, 0, 0};
     int dc[] = {0, 0, -1, 1};
@@ -132,7 +252,7 @@ void GameEngine::updateConnectivityDegrees(int row, int col) {
     }
 }
 
-// spreadVirus: Infects healthy neighbors of currently infected nodes with 50% probability each
+// spreadVirus: Each infected node can infect up to 2 healthy neighbors per turn (50% each)
 void GameEngine::spreadVirus() {
     Point infected_nodes[144];
     int infected_count = 0;
@@ -150,28 +270,37 @@ void GameEngine::spreadVirus() {
     for (int i = 0; i < infected_count; i++) {
         int r = infected_nodes[i].r;
         int c = infected_nodes[i].c;
+        int infections_this_node = 0;
         for (int j = 0; j < 4; j++) {
+            if (infections_this_node >= 1) break; // max 1 per node per turn
             int nr = r + dr[j];
             int nc = c + dc[j];
             if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE) {
                 if (grid[nr][nc].state == HEALTHY) {
                     double roll = (double)rand() / (double)RAND_MAX;
-                    if (roll < 0.50) {
+                    if (roll < 0.20) {
                         grid[nr][nc].state = INFECTED;
                         infection_history.append(nr, nc, turn, "spread");
-
                         bst.remove(nr * GRID_SIZE + nc, grid[nr][nc].degree);
                         grid[nr][nc].degree = 0;
-
                         updateConnectivityDegrees(nr, nc);
+                        infections_this_node++;
                     }
                 }
             }
         }
     }
+
+    // Check if virus reached player or goal
+    if (grid[player_row][player_col].state == INFECTED) {
+        player_infected = true;
+    }
+    if (grid[goal_row][goal_col].state == INFECTED) {
+        goal_infected = true;
+    }
 }
 
-// applyAction: Dispatches actions based on input JSON commands
+// applyAction: Dispatches actions based on input commands
 void GameEngine::applyAction(int row, int col, int action_code) {
     if (action_code == 1) { // Patch
         if (budget >= 1 && row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE && grid[row][col].state == HEALTHY) {
@@ -180,29 +309,6 @@ void GameEngine::applyAction(int row, int col, int action_code) {
             grid[row][col].degree = 0;
             updateConnectivityDegrees(row, col);
             budget -= 1;
-        }
-    }
-    else if (action_code == 2) { // Reinforce - patches target + healthy neighbors, costs 3, 3 turn cooldown
-        if (reinforce_cooldown == 0 && budget >= 3 && row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE && grid[row][col].state == HEALTHY) {
-            grid[row][col].state = PATCHED;
-            bst.remove(row * GRID_SIZE + col, grid[row][col].degree);
-            grid[row][col].degree = 0;
-            updateConnectivityDegrees(row, col);
-
-            int dr[] = {-1, 1, 0, 0};
-            int dc[] = {0, 0, -1, 1};
-            for (int i = 0; i < 4; i++) {
-                int nr = row + dr[i];
-                int nc = col + dc[i];
-                if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE && grid[nr][nc].state == HEALTHY) {
-                    grid[nr][nc].state = PATCHED;
-                    bst.remove(nr * GRID_SIZE + nc, grid[nr][nc].degree);
-                    grid[nr][nc].degree = 0;
-                    updateConnectivityDegrees(nr, nc);
-                }
-            }
-            budget -= 3;
-            reinforce_cooldown = 3;
         }
     }
     else if (action_code == 3) { // Greedy suggestion patch
@@ -234,7 +340,6 @@ void GameEngine::applyAction(int row, int col, int action_code) {
     }
 }
 
-// calculateScore: +10 for HEALTHY nodes, -5 for INFECTED nodes, +5 for PATCHED nodes
 int GameEngine::calculateScore() {
     int healthy = 0;
     int infected = 0;
@@ -250,7 +355,6 @@ int GameEngine::calculateScore() {
     return score;
 }
 
-// isClusterContained: Helper to check if the virus is contained inside a given perimeter
 bool GameEngine::isClusterContained(Point* perimeter, int size) const {
     int dr[] = {-1, 1, 0, 0};
     int dc[] = {0, 0, -1, 1};
@@ -281,7 +385,6 @@ bool GameEngine::isClusterContained(Point* perimeter, int size) const {
     return true;
 }
 
-// backtrackSearch: Recursively searches for the minimum sized perimeter containing the infection
 void GameEngine::backtrackSearch(int index, Point* current_perimeter, int current_size, Point* boundary, int boundary_count) {
     if (current_size >= backtracking_perimeter_size) {
         return;
@@ -305,7 +408,6 @@ void GameEngine::backtrackSearch(int index, Point* current_perimeter, int curren
     backtrackSearch(index + 1, current_perimeter, current_size, boundary, boundary_count);
 }
 
-// computeBacktrackingPerimeter: Locates boundary nodes, filters to top 12 using proximity heuristic, and executes search
 void GameEngine::computeBacktrackingPerimeter() {
     Point boundary[144];
     int boundary_count = 0;
@@ -379,7 +481,6 @@ void GameEngine::computeBacktrackingPerimeter() {
     }
 }
 
-// readInputJSON: Reads inputs from shared/input.json and updates state
 void GameEngine::readInputJSON() {
     std::ifstream file("shared/input.json");
     if (!file.is_open()) return;
@@ -394,7 +495,6 @@ void GameEngine::readInputJSON() {
 
     int action_code = 0;
     if (action == "patch") action_code = 1;
-    else if (action == "reinforce") action_code = 2;
     else if (action == "greedy") action_code = 3;
     else if (action == "backtracking") action_code = 4;
     else if (action == "quit") action_code = -1;
@@ -403,7 +503,6 @@ void GameEngine::readInputJSON() {
         applyAction(row, col, action_code);
     }
 
-    // Reset input.json immediately after reading to avoid infinite application loops
     std::ofstream out("shared/input.json");
     if (out.is_open()) {
         out << "{\n"
@@ -415,7 +514,6 @@ void GameEngine::readInputJSON() {
     }
 }
 
-// writeStateJSON: Outputs the current state to shared/state.json
 void GameEngine::writeStateJSON() {
     computeBacktrackingPerimeter();
 
@@ -426,9 +524,14 @@ void GameEngine::writeStateJSON() {
     ss << "  \"budget\": " << budget << ",\n";
     ss << "  \"greedy_cost\": " << greedy_cost << ",\n";
     ss << "  \"backtracking_cooldown\": " << backtracking_cooldown << ",\n";
-    ss << "  \"reinforce_cooldown\": " << reinforce_cooldown << ",\n";
 
-    // Grid: 12x12 2D array
+    // Player and goal positions
+    ss << "  \"player_pos\": {\"row\": " << player_row << ", \"col\": " << player_col << "},\n";
+    ss << "  \"goal_pos\": {\"row\": " << goal_row << ", \"col\": " << goal_col << "},\n";
+    ss << "  \"player_infected\": " << (player_infected ? "true" : "false") << ",\n";
+    ss << "  \"goal_infected\": " << (goal_infected ? "true" : "false") << ",\n";
+
+    // Grid
     ss << "  \"grid\": [\n";
     for (int r = 0; r < GRID_SIZE; r++) {
         ss << "    [";

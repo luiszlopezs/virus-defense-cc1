@@ -245,6 +245,73 @@ def count_infected(grid: list[list[int]]) -> int:
 
 
 # ──────────────────────────────────────────────
+# Pathfinding
+# ──────────────────────────────────────────────
+def find_safe_path(
+    grid: list[list[int]],
+    start: tuple[int, int],
+    goal: tuple[int, int],
+) -> list[tuple[int, int]]:
+    """Find the shortest safe path from *start* to *goal* using BFS.
+
+    The path avoids INFECTED cells and only traverses HEALTHY or PATCHED
+    cells.  Returns an empty list when no path exists.
+
+    Parameters
+    ----------
+    grid : list[list[int]]
+        The current 12×12 game grid.
+    start : tuple[int, int]
+        ``(row, col)`` of the starting cell (player position).
+    goal : tuple[int, int]
+        ``(row, col)`` of the destination cell (goal position).
+
+    Returns
+    -------
+    list[tuple[int, int]]
+        Ordered list of ``(row, col)`` from *start* to *goal* inclusive.
+        Empty list if no safe path exists.
+
+    Complexity
+    ----------
+    O(GRID_SIZE²) — BFS visits each cell at most once.
+    """
+    from collections import deque
+
+    sr, sc = start
+    gr, gc = goal
+
+    if start == goal:
+        return [start]
+
+    visited: set[tuple[int, int]] = {start}
+    parent: dict[tuple[int, int], tuple[int, int] | None] = {start: None}
+    queue: deque[tuple[int, int]] = deque([start])
+
+    while queue:
+        r, c = queue.popleft()
+        for nr, nc in get_neighbors(grid, r, c):
+            if (nr, nc) in visited:
+                continue
+            if grid[nr][nc] == INFECTED:
+                continue
+            visited.add((nr, nc))
+            parent[(nr, nc)] = (r, c)
+            if (nr, nc) == goal:
+                # Reconstruct path
+                path = []
+                cur = goal
+                while cur is not None:
+                    path.append(cur)
+                    cur = parent[cur]
+                path.reverse()
+                return path
+            queue.append((nr, nc))
+
+    return []  # No path found
+
+
+# ──────────────────────────────────────────────
 # Quick smoke-test
 # ──────────────────────────────────────────────
 if __name__ == "__main__":
