@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virus Defense — Planeación 7 Días (Grilla 12x12 & Habilidades Modificadas)</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --bg2: #0f1218;
+    --bg3: #161b24;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --luis: #7c6cfa;
+    --luis-dim: rgba(124,108,250,0.12);
+    --luis-border: rgba(124,108,250,0.3);
+    --mj: #34d399;
+    --mj-dim: rgba(52,211,153,0.1);
+    --mj-border: rgba(52,211,153,0.3);
+    --alicia: #fb923c;
+    --alicia-dim: rgba(251,146,60,0.1);
+    --alicia-border: rgba(251,146,60,0.3);
+    --shared: #f472b6;
+    --shared-dim: rgba(244,114,182,0.1);
+    --shared-border: rgba(244,114,182,0.3);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,108,250,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,108,250,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 48px 32px 80px; }
+
+  /* ── HEADER ── */
+  .header { margin-bottom: 48px; }
+
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(124,108,250,0.1);
+    border: 1px solid rgba(124,108,250,0.25);
+    border-radius: 999px;
+    padding: 4px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: #a5a0f8;
+    margin-bottom: 20px;
+    letter-spacing: 0.04em;
+  }
+
+  .dot-pulse {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--luis);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  h1 {
+    font-size: 42px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+
+  h1 span {
+    color: var(--luis);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 15px;
+    margin-bottom: 28px;
+  }
+
+  .meta-row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    padding: 16px 20px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+
+  .meta-item { display: flex; flex-direction: column; gap: 2px; }
+  .meta-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+  .meta-value { font-size: 13px; font-weight: 500; color: var(--text); }
+
+  /* ── TEAM ── */
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 48px;
+  }
+
+  .team-card {
+    padding: 16px 18px;
+    border-radius: 10px;
+    border: 1px solid var(--border2);
+    background: var(--bg2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .team-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .team-card.luis::before { background: var(--luis); }
+  .team-card.mj::before { background: var(--mj); }
+  .team-card.alicia::before { background: var(--alicia); }
+
+  .team-role {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+
+  .team-card.luis .team-role { color: var(--luis); }
+  .team-card.mj .team-role { color: var(--mj); }
+  .team-card.alicia .team-role { color: var(--alicia); }
+
+  .team-name { font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 6px; }
+
+  .team-lang {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .team-card.luis .team-lang { background: var(--luis-dim); color: var(--luis); }
+  .team-card.mj .team-lang { background: var(--mj-dim); color: var(--mj); }
+  .team-card.alicia .team-lang { background: var(--alicia-dim); color: var(--alicia); }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .section-title h2 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── TIMELINE ── */
+  .timeline { margin-bottom: 56px; }
+
+  .day-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: stretch;
+  }
+
+  .day-label {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 12px;
+  }
+
+  .day-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .task-chip {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid;
+    font-size: 12px;
+    line-height: 1.4;
+    position: relative;
+  }
+
+  .task-chip.luis { background: var(--luis-dim); border-color: var(--luis-border); color: #c4bfff; }
+  .task-chip.mj { background: var(--mj-dim); border-color: var(--mj-border); color: #86efcb; }
+  .task-chip.alicia { background: var(--alicia-dim); border-color: var(--alicia-border); color: #fed7b0; }
+  .task-chip.shared {
+    background: var(--shared-dim);
+    border-color: rgba(244,114,182,0.3);
+    color: #fbb6db;
+    grid-column: 2 / 5;
+  }
+
+  .chip-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.6;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .chip-title { font-weight: 500; }
+
+  /* ── DETAIL CARDS ── */
+  .member-section { margin-bottom: 56px; }
+
+  .member-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .member-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+
+  .luis-dot { background: var(--luis); }
+  .mj-dot { background: var(--mj); }
+  .alicia-dot { background: var(--alicia); }
+
+  .member-header h2 { font-size: 18px; font-weight: 600; color: #fff; }
+  .member-header .member-sub { color: var(--muted); font-size: 13px; }
+
+  .day-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .day-card:hover { border-color: var(--border2); }
+
+  .day-card-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .day-num-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .luis .day-num-badge { background: var(--luis-dim); color: var(--luis); border: 1px solid var(--luis-border); }
+  .mj .day-num-badge { background: var(--mj-dim); color: var(--mj); border: 1px solid var(--mj-border); }
+  .alicia .day-num-badge { background: var(--alicia-dim); color: var(--alicia); border: 1px solid var(--alicia-border); }
+
+  .day-card-title { font-size: 14px; font-weight: 500; color: #fff; flex: 1; }
+
+  .branch-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.05);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  .chevron {
+    color: var(--muted);
+    font-size: 12px;
+    transition: transform 0.2s;
+  }
+
+  .day-card-body {
+    display: none;
+    padding: 0 18px 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .day-card-body.open { display: block; }
+
+  .tag-row { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0 10px; }
+
+  .tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.05);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .prompt-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .prompt-block {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    position: relative;
+  }
+
+  .prompt-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: #9ca3af;
+    white-space: pre-wrap;
+    line-height: 1.7;
+  }
+
+  .copy-btn {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+
+  .copy-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+  /* ── FOOTER ── */
+  .footer {
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .footer-logo { font-family: 'Space Mono', monospace; font-size: 11px; }
+
+  @media print {
+    body::before { display: none; }
+    .copy-btn { display: none; }
+    .day-card-body { display: block !important; }
+    .chevron { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-badge">
+      <div class="dot-pulse"></div>
+      Computer Sciences I — Semestre 2026-I
+    </div>
+    <h1>Virus <span>Defense</span></h1>
+    <p class="subtitle">Planeación de implementación (12x12 & Habilidades Balanceadas) — 7 días · Equipo 10 · Variante 10</p>
+    <div class="meta-row">
+      <div class="meta-item">
+        <span class="meta-label">Proyecto</span>
+        <span class="meta-value">Algorithm Arena</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Profesor</span>
+        <span class="meta-value">Eng. Carlos Andrés Sierra, M.Sc.</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Universidad</span>
+        <span class="meta-value">Universidad Distrital Francisco José de Caldas</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Arquitectura</span>
+        <span class="meta-value">C++ Engine (12x12) + Python/Pygame + JSON Bridge</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEAM -->
+  <div class="section-title"><h2>Equipo</h2></div>
+  <div class="team-grid">
+    <div class="team-card luis">
+      <div class="team-role">Engine Developer</div>
+      <div class="team-name">Luis Fernando Lopez Pardo</div>
+      <span class="team-lang">C++17</span>
+    </div>
+    <div class="team-card mj">
+      <div class="team-role">Algorithm Developer</div>
+      <div class="team-name">Maria Jose Polanco Charry</div>
+      <span class="team-lang">Python</span>
+    </div>
+    <div class="team-card alicia">
+      <div class="team-role">UI Developer</div>
+      <div class="team-name">Alicia Pineda Quiroga</div>
+      <span class="team-lang">Python + Pygame</span>
+    </div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="timeline">
+    <div class="section-title"><h2>Vista general — 7 días</h2></div>
+
+    <div class="day-row">
+      <div class="day-label"><span class="day-num">DÍA 1</span></div>
+      <div class="task-chip luis"><span class="chip-label">Luis</span><span class="chip-title">Node, constantes, GameEngine.h (12x12)</span></div>
+      <div class="task-chip mj"><span class="chip-label">Maria Jose</span><span class="chip-title">Modelo de grilla 12x12 + utils</span></div>
+      <div class="task-chip alicia"><span class="chip-label">Alicia</span><span class="chip-title">Ventana Pygame + grilla base dinámica</span></div>
+    </div>
+    <div class="day-row">
+      <div class="day-label"><span class="day-num">DÍA 2</span></div>
+      <div class="task-chip luis"><span class="chip-label">Luis</span><span class="chip-title">LinkedList</span></div>
+      <div class="task-chip mj"><span class="chip-label">Maria Jose</span><span class="chip-title">Algoritmo Greedy Local y Costo Variable</span></div>
+      <div class="task-chip alicia"><span class="chip-label">Alicia</span><span class="chip-title">HUD sidebar adaptativo (costos/cooldowns)</span></div>
+    </div>
+    <div class="day-row">
+      <div class="day-label"><span class="day-num">DÍA 3</span></div>
+      <div class="task-chip luis"><span class="chip-label">Luis</span><span class="chip-title">BST (hasta 144 nodos)</span></div>
+      <div class="task-chip mj"><span class="chip-label">Maria Jose</span><span class="chip-title">Backtracking Local (límite y cooldown)</span></div>
+      <div class="task-chip alicia"><span class="chip-label">Alicia</span><span class="chip-title">Highlights visuales (previews/costos)</span></div>
+    </div>
+    <div class="day-row">
+      <div class="day-label"><span class="day-num">DÍA 4</span></div>
+      <div class="task-chip luis"><span class="chip-label">Luis</span><span class="chip-title">spreadVirus() + readInputJSON()</span></div>
+      <div class="task-chip mj"><span class="chip-label">Maria Jose</span><span class="chip-title">JSON Bridge Python</span></div>
+      <div class="task-chip alicia"><span class="chip-label">Alicia</span><span class="chip-title">Eventos e inputs del jugador</span></div>
+    </div>
+    <div class="day-row">
+      <div class="day-label"><span class="day-num">DÍA 5</span></div>
+      <div class="task-chip luis"><span class="chip-label">Luis</span><span class="chip-title">writeStateJSON() (con costes/cooldowns) + main.cpp</span></div>
+      <div class="task-chip mj"><span class="chip-label">Maria Jose</span><span class="chip-title">Pruebas de algoritmos</span></div>
+      <div class="task-chip alicia"><span class="chip-label">Alicia</span><span class="chip-title">Loop principal integrado</span></div>
+    </div>
+    <div class="day-row">
+      <div class="day-label"><span class="day-num">DÍA 6</span></div>
+      <div class="task-chip shared"><span class="chip-label">🔗 Los tres — Integración C++ ↔ Python</span><span class="chip-title">Verificar schemas JSON · Prueba de Bridge con costes y 12x12</span></div>
+    </div>
+    <div class="day-row">
+      <div class="day-label"><span class="day-num">DÍA 7</span></div>
+      <div class="task-chip luis"><span class="chip-label">Luis</span><span class="chip-title">Benchmark de motor + docs de complejidad</span></div>
+      <div class="task-chip mj"><span class="chip-label">Maria Jose</span><span class="chip-title">Benchmark algoritmos (12x12 limits)</span></div>
+      <div class="task-chip alicia"><span class="chip-label">Alicia</span><span class="chip-title">Pantallas finales + README</span></div>
+    </div>
+  </div>
+
+  <!-- LUIS -->
+  <div class="member-section">
+    <div class="section-title"><h2>Luis Fernando Lopez — C++ Engine</h2></div>
+    <div class="member-header">
+      <div class="member-dot luis-dot"></div>
+      <h2>Engine Developer</h2>
+      <span class="member-sub">Motor C++ sin STL · LinkedList · BST · JSON bridge C++ (Grilla 12x12)</span>
+    </div>
+
+    <div id="cards-luis"></div>
+  </div>
+
+  <!-- MARIA JOSE -->
+  <div class="member-section">
+    <div class="section-title"><h2>Maria Jose Polanco — Algoritmos Python</h2></div>
+    <div class="member-header">
+      <div class="member-dot mj-dot"></div>
+      <h2>Algorithm Developer</h2>
+      <span class="member-sub">Greedy Local · Backtracking Acotado · JSON bridge Python · Benchmarks</span>
+    </div>
+
+    <div id="cards-mj"></div>
+  </div>
+
+  <!-- ALICIA -->
+  <div class="member-section">
+    <div class="section-title"><h2>Alicia Pineda — UI / Pygame</h2></div>
+    <div class="member-header">
+      <div class="member-dot alicia-dot"></div>
+      <h2>UI Developer</h2>
+      <span class="member-sub">Pygame · Grilla 12x12 dinámica · HUD de costes/cooldowns · Interacción del jugador · Pantallas</span>
+    </div>
+
+    <div id="cards-alicia"></div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <span class="footer-logo">virus-defense / team-10 / 2026-I</span>
+    <span>Semanas 9–16 · Entrega final semana 16</span>
+  </div>
+
+</div>
+
+<script>
+const data = {
+  luis: [
+    {
+      day: "Día 1",
+      title: "Estructuras base: Node, constantes y GameEngine.h",
+      branch: "feature/engine-structs",
+      tags: ["C++17","sin STL","GameEngine.h","12x12"],
+      prompt: `Proyecto: Virus Defense — Motor C++ (sin STL).
+Grilla ampliada de 12x12, nodos con tres estados.
+
+Crea engine/src/GameEngine.h con:
+- Constantes: GRID_SIZE=12, HEALTHY=0, INFECTED=1, PATCHED=2
+- Struct Node { int row, col, degree, state; }
+- Clase GameEngine con atributos:
+    Node grid[12][12];
+    int turn, score, budget;
+    int greedy_cost;          // Costo actual del Greedy (empieza en 1)
+    int backtracking_cooldown; // Cooldown restante para Backtracking (empieza en 0)
+  y declaración (sin implementar) de:
+    void spreadVirus();
+    void applyAction(int row, int col, int action);
+    void writeStateJSON();
+    void readInputJSON();
+    int calculateScore();
+
+Solo el .h, sin implementación. Con comentario de cabecera:
+autor, archivo, descripción en una línea.`
+    },
+    {
+      day: "Día 2",
+      title: "LinkedList — historial de infecciones",
+      branch: "feature/linked-list",
+      tags: ["C++","sin STL","LinkedList"],
+      prompt: `Proyecto: Virus Defense — Motor C++ (sin STL).
+Contexto: la lista encadenada registra cada infección. Al expandirse la grilla a 12x12, el historial puede crecer más rápido.
+
+Crea engine/src/LinkedList.h and LinkedList.cpp con:
+- Struct InfectionEvent { int row, col, turn; char cause[32]; }
+- Clase LinkedList (singly linked, sin STL):
+    void append(int row, int col, int turn, const char* cause);
+    int getSize();
+    void printAll();
+    void toArray(InfectionEvent* out, int& count);
+    toArray() llena el arreglo out con todos los eventos en orden.
+- Destructor que libera memoria.
+
+Reglas: sin vector, sin list, sin STL de ningún tipo.
+Comentarios en cada método explicando la lógica.`
+    },
+    {
+      day: "Día 3",
+      title: "BST — nodos indexados por grado de conectividad",
+      branch: "feature/bst",
+      tags: ["C++","BST","sin STL","12x12"],
+      prompt: `Proyecto: Virus Defense — Motor C++ (sin STL).
+El BST indexa nodos por su grado de conectividad (1–4). Al ser una grilla 12x12, indexa hasta 144 nodos.
+
+Crea engine/src/BST.h y BST.cpp con:
+- Struct BSTNode { int degree, node_id; BSTNode* left; BSTNode* right; }
+  node_id = row*12 + col (0–143).
+- Clase BST:
+    void insert(int node_id, int degree);
+    void remove(int node_id, int degree);
+    int findMax(); // retorna node_id con mayor degree. -1 si vacío.
+    void update(int node_id, int old_deg, int new_deg); // remove+insert
+- Destructor recursivo.
+
+Sin STL. El árbol no necesita ser AVL (144 nodos máx, keys/grados siguen siendo 1–4 dado que no hay diagonales).
+Comentarios explicando por qué no se necesita balanceo.`
+    },
+    {
+      day: "Día 4",
+      title: "spreadVirus() + readInputJSON() con nlohmann/json",
+      branch: "feature/engine-logic",
+      tags: ["C++","nlohmann/json","GameEngine.cpp","12x12"],
+      prompt: `Proyecto: Virus Defense — Motor C++.
+nlohmann/json disponible como header-only en engine/include/json.hpp.
+
+Implementa en engine/src/GameEngine.cpp:
+
+1. readInputJSON(): lee shared/input.json con nlohmann.
+   Schema esperado:
+   { "action": "patch"|"reinforce"|"greedy"|"backtracking"|"none"|"quit",
+     "target": {"row": int, "col": int},
+     "budget_spent": int }
+   Si el archivo no existe, no hace nada.
+
+2. spreadVirus(): por cada nodo INFECTED, intenta infectar vecinos
+   HEALTHY (arriba, abajo, izq, der), respetando bordes (12x12).
+   Cada infección nueva se registra en LinkedList con append().
+
+3. initGrid(): inicializa todos los nodos como HEALTHY, calcula
+   degree de cada nodo (1–4), inserta en BST.
+   Coloca un nodo INFECTED en (5,5) como punto inicial central.
+
+Comentarios explicando la lógica de propagación.`
+    },
+    {
+      day: "Día 5",
+      title: "writeStateJSON() + applyAction() + main.cpp",
+      branch: "feature/engine-output",
+      tags: ["C++","JSON output","game loop","habilidades-balanceo"],
+      prompt: `Proyecto: Virus Defense — Motor C++.
+nlohmann/json disponible en engine/include/json.hpp.
+
+Implementa:
+
+1. writeStateJSON(): escribe shared/state.json con:
+   { "turn": int, "score": int, "budget": int,
+     "greedy_cost": int,
+     "backtracking_cooldown": int,
+     "grid": [[int x12] x12],
+     "infection_history": [{"row":int,"col":int,"turn":int,"cause":str},...],
+     "greedy_suggestion": {"row":-1,"col":-1},
+     "backtracking_perimeter": [] }
+
+2. applyAction(row, col, action_code):
+   - 1 = patch (cuesta 1 budget)
+   - 2 = reinforce (cuesta 2 budget)
+   - 3 = greedy (cuesta el valor actual de greedy_cost; tras usarse, greedy_cost incrementa en +1)
+   - 4 = backtracking (cuesta k budget, donde k es el tamaño del perímetro; activa backtracking_cooldown = 3)
+   Verifica budget suficiente y en caso de backtracking, que backtracking_cooldown == 0.
+   Actualiza BST con update().
+
+3. calculateScore(): +10 por HEALTHY, -5 por INFECTED. Retorna int.
+
+4. main.cpp: loop:
+   En cada turno, si backtracking_cooldown > 0, decrementa en 1 al inicio del turno del jugador.
+   readInputJSON → applyAction → spreadVirus → calculateScore →
+   writeStateJSON. Repite con sleep de 300ms. Sale si action=="quit".`
+    },
+    {
+      day: "Día 6",
+      title: "Integración C++ ↔ Python — verificación de schemas",
+      branch: "feature/integration-test",
+      tags: ["integración","debug","JSON"],
+      prompt: `Proyecto: Virus Defense — integración C++ y Python.
+Trabaja con Maria Jose y Alicia este día.
+
+Tarea:
+1. Muestra el schema actual que escribe writeStateJSON() en C++ (debe contener greedy_cost y backtracking_cooldown).
+2. Muestra el schema que espera read_state() en Python.
+3. Lista cualquier campo faltante o con nombre distinto.
+4. Propón correcciones mínimas para que coincidan.
+5. Escribe experiments/test_bridge.py que:
+   - Escribe un input.json de prueba con action="none"
+   - Imprime el state.json que genera el motor (1 segundo después)
+   - Verifica que los campos requeridos existen con el tipo correcto (incluyendo costos y cooldowns)
+   - Imprime PASS/FAIL.`
+    },
+    {
+      day: "Día 7",
+      title: "Benchmark del motor + documentación de complejidad",
+      branch: "docs/engine-complexity",
+      tags: ["complejidad","docs","results","12x12"],
+      prompt: `Proyecto: Virus Defense — documentación del motor C++.
+
+1. En experiments/engine_benchmark.cpp:
+   mide el tiempo de 100 ejecuciones de spreadVirus() sobre una grilla de 12x12
+   con 10 nodos infectados aleatorios. Guarda promedio en results/engine_times.txt.
+
+2. En docs/ARCHITECTURE.md, sección "C++ Engine":
+   - Diagrama ASCII del game loop (4 fases del reporte técnico)
+   - Complejidad de spreadVirus(): O(n), n=144
+   - Complejidad de BST::findMax(): O(log n)
+   - Justificación de por qué no se necesita AVL con n=144 y keys 1–4 (la profundidad máxima sigue siendo 4 por los grados limitados, previniendo la degradación a O(n))
+   - LinkedList: append() O(1), toArray() O(n)
+
+Todo coherente con el reporte técnico del equipo.`
+    }
+  ],
+  mj: [
+    {
+      day: "Día 1",
+      title: "Modelo de grilla + funciones auxiliares",
+      branch: "feature/grid-model",
+      tags: ["Python","grid_utils","estructura base","12x12"],
+      prompt: `Proyecto: Virus Defense — algoritmos Python.
+La grilla es una lista de listas 12x12 (0=HEALTHY, 1=INFECTED, 2=PATCHED).
+
+Crea game/algorithms/__init__.py vacío.
+Crea game/algorithms/grid_utils.py con:
+- GRID_SIZE = 12
+- HEALTHY, INFECTED, PATCHED = 0, 1, 2
+- get_neighbors(grid, row, col) -> list[tuple]: retorna vecinos válidos
+  (arriba, abajo, izq, der), sin diagonales, respetando bordes.
+- get_degree(row, col) -> int: número de vecinos válidos sin importar estado.
+- get_boundary_nodes(grid) -> list[tuple]: nodos HEALTHY con al menos
+  un vecino INFECTED.
+- is_infected_cluster_empty(grid) -> bool: True si no hay INFECTED.
+
+Con docstrings y bloque __main__ que imprime ejemplos de prueba.`
+    },
+    {
+      day: "Día 2",
+      title: "Algoritmo Greedy Local y Costo Variable",
+      branch: "feature/greedy-algorithm",
+      tags: ["Python","greedy","local","habilidades-balanceo"],
+      prompt: `Proyecto: Virus Defense — algoritmo Greedy Local (Python).
+Archivo: game/algorithms/greedy.py
+Usa las funciones de grid_utils.py. El Greedy debe ser de enfoque local.
+
+Implementa:
+- get_greedy_suggestion(grid, current_pos: tuple) -> tuple[int,int] | None:
+  1. Obtén los vecinos disponibles desde la posición actual del jugador (current_pos).
+  2. Filtra aquellos vecinos que no sean HEALTHY (ignorar INFECTED y PATCHED).
+  3. Para cada vecino válido, calcula su grado (cantidad de vecinos adyacentes sanos).
+  4. Selecciona el vecino con el grado más alto de conectividad.
+  5. En caso de empate, selecciona el nodo más cercano al centro de la grilla (coordenada 5,5). Si persiste el empate, elige el primero encontrado.
+  6. Retorna None si no hay vecinos válidos sanos.
+
+Complejidad esperada: O(1) ya que solo evalúa los vecinos contiguos de la posición actual (máximo 4).
+
+Explica en el docstring:
+- Por qué el Greedy Local es mejor para la continuidad de juego y narrativa en comparación con el global.
+- Limitación local (no óptimo global) y por qué esto introduce el reto del juego.`
+    },
+    {
+      day: "Día 3",
+      title: "Algoritmo Backtracking Acotado y Cooldown",
+      branch: "feature/backtracking-algorithm",
+      tags: ["Python","backtracking","NP-hard","poda","12x12"],
+      prompt: `Proyecto: Virus Defense — algoritmo Backtracking Acotado (Python).
+Archivo: game/algorithms/backtracking.py
+Usa grid_utils.py.
+
+Dado que la grilla es 12x12 (144 nodos), el cálculo de un perímetro global óptimo puede generar una explosión combinatoria.
+
+Implementa:
+- is_cluster_contained(grid, perimeter: set) -> bool:
+  Ningún nodo INFECTED tiene vecino HEALTHY fuera del perimeter.
+
+- get_quarantine_perimeter(grid) -> list[tuple]:
+  Encuentra el conjunto MÍNIMO de boundary nodes que contiene la infección.
+  Algoritmo:
+    1. boundary_nodes = get_boundary_nodes()
+    2. Salvaguarda de rendimiento: Si len(boundary_nodes) > 12, el backtracking debe limitar su espacio de búsqueda a un sub-cluster o ventana local alrededor de la infección principal para no congelar el juego (NP-hard).
+    3. Backtracking recursivo sobre los subsets del conjunto acotado.
+    4. Poda: si len(current) >= len(best_known), descarta la rama.
+    5. Si is_cluster_contained(grid, current): guarda como mejor solución.
+  Retorna lista de (row, col). Lista vacía si no hay infección.
+
+Docstring: explica la poda, la salvaguarda de límite de nodos, y la justificación del cooldown de 3 turnos para evitar abuso.`
+    },
+    {
+      day: "Día 4",
+      title: "JSON Bridge Python",
+      branch: "feature/json-bridge",
+      tags: ["Python","json","bridge","módulo estándar"],
+      prompt: `Proyecto: Virus Defense — bridge Python.
+Archivo: game/bridge/json_bridge.py
+Usa el módulo json estándar de Python. Debe soportar las nuevas variables de balanceo de habilidades.
+
+Implementa:
+- SHARED_PATH: ruta a shared/ relativa al script.
+- read_state() -> dict:
+  Lee shared/state.json.
+  Si no existe o está mal formado, retorna estado inicial:
+  {"turn":0,"score":0,"budget":3,"greedy_cost":1,"backtracking_cooldown":0,"grid":[[0]*12 for _ in range(12)],
+   "infection_history":[],"greedy_suggestion":{"row":-1,"col":-1},"backtracking_perimeter":[]}
+- write_input(action: str, target: tuple, budget_spent: int) -> None:
+  Escribe shared/input.json.
+  action: "patch","reinforce","greedy","backtracking","none","quit".
+
+try/except en ambas funciones. Docstrings con el schema JSON.`
+    },
+    {
+      day: "Día 5",
+      title: "Pruebas de algoritmos",
+      branch: "feature/algorithm-tests",
+      tags: ["Python","testing","PASS/FAIL","12x12"],
+      prompt: `Proyecto: Virus Defense — pruebas de algoritmos Python.
+
+Crea experiments/test_algorithms.py:
+
+1. Greedy Local:
+   - Posición actual (5,5), vecinos libres → retorna el de mayor grado.
+   - En caso de empate en grado, verifica que priorice la cercanía al centro de la grilla (5,5).
+
+2. Backtracking Acotado:
+   - Cluster de 2 nodos infectados → comprueba cálculo rápido.
+   - Cluster simulado de más de 12 nodos frontera → verifica que el algoritmo se active bajo la regla de salvaguarda (ventana local) y no cause timeout o congelamiento.
+
+3. Bridge:
+   write_input("patch",(5,5),1) → read_state() sin crash.
+
+Imprime PASS/FAIL por cada caso. Sin dependencias externas.`
+    },
+    {
+      day: "Día 6",
+      title: "Integración con el motor C++",
+      branch: "feature/integration-test",
+      tags: ["integración","debug","schemas","habilidades-balanceo"],
+      prompt: `Proyecto: Virus Defense — integración Python con motor C++.
+Trabaja con Luis y Alicia este día.
+
+Tu tarea:
+1. Ejecuta test_algorithms.py con el state.json real del motor C++ (con grilla 12x12).
+2. Verifica que el coste creciente del greedy_cost y el decremento del backtracking_cooldown se lean y actualicen correctamente a través de la comunicación JSON.
+3. Asegura que cuando backtracking_cooldown > 0, el cliente Python no envíe acciones de tipo "backtracking".
+4. Verifica que los resultados se reflejan correctamente en el HUD.`
+    },
+    {
+      day: "Día 7",
+      title: "Benchmark de algoritmos + análisis de complejidad",
+      branch: "docs/algorithm-complexity",
+      tags: ["benchmark","complejidad","CSV","results","12x12"],
+      prompt: `Proyecto: Virus Defense — benchmark de algoritmos Python en grilla 12x12.
+
+Crea experiments/algorithm_benchmark.py:
+- 5 grillas de prueba: 0, 1, 3, 5, 8 y más de 12 nodos infectados frontera.
+- Para cada grilla, mide con time.perf_counter():
+    - Tiempo de greedy (10 corridas, promedio)
+    - Tiempo de backtracking (10 corridas, promedio)
+    - Verifica el comportamiento del backtracking en clusters gigantes (salvaguarda de rendimiento).
+- Guarda en results/algorithm_benchmark.csv:
+  grid_id, infected_count, greedy_ms, backtracking_ms, perimeter_size
+
+En docs/ARCHITECTURE.md, sección "Algoritmos":
+- Greedy Local: O(1) de evaluación de vecindario, justificación.
+- Backtracking: Exponencial pero acotado a un máximo de 12 nodos en la frontera debido a la salvaguarda de rendimiento implementada.`
+    }
+  ],
+  alicia: [
+    {
+      day: "Día 1",
+      title: "Ventana Pygame + grilla base dinámica",
+      branch: "feature/pygame-grid",
+      tags: ["Python","Pygame","Renderer","12x12"],
+      prompt: `Proyecto: Virus Defense — interfaz Pygame.
+Archivo: game/ui/renderer.py
+
+Implementa la clase Renderer adaptada para 12x12:
+- __init__(screen): superficie Pygame. Define:
+    GRID_ORIGIN = (30, 30)
+    CELL_SIZE = 40  // Reducido de 60 para acomodar 12x12
+    COLORS = {0: (76,175,80), 1: (244,67,54), 2: (255,152,0)}
+    # 0=HEALTHY verde, 1=INFECTED rojo, 2=PATCHED ámbar
+
+- draw_grid(grid: list[list[int]]):
+    Dibuja 12x12 nodos como círculos (radio 14px) centrados en cada celda.
+    Conecta nodos adyacentes con líneas grises (1px) antes de los círculos.
+
+- get_clicked_node(mouse_pos: tuple) -> tuple | None:
+    Convierte coordenada de click a (row, col) de la grilla 12x12. None si está fuera.
+
+Crea game/main.py con:
+- Ventana 800x600, título "Virus Defense (Grilla 12x12)"
+- Loop que llama draw_grid con grilla de prueba de 12x12 ((5,5) = INFECTED, resto HEALTHY)
+- ESC cierra la ventana.`
+    },
+    {
+      day: "Día 2",
+      title: "HUD sidebar con stats de balance de habilidades",
+      branch: "feature/hud",
+      tags: ["Python","Pygame","HUD","sidebar","habilidades-balanceo"],
+      prompt: `Proyecto: Virus Defense — HUD sidebar balanceado.
+renderer.py ya tiene draw_grid() de 12x12.
+Ventana 800x600. Grilla x=0..520, HUD x=530..800.
+
+Agrega a Renderer:
+- draw_hud(turn, budget, score, danger_level, greedy_hint, greedy_cost, bt_size, bt_cooldown):
+  Dibuja en el sidebar:
+    - "Turno: N"
+    - "Presupuesto: N pts"
+    - "Score: N"
+    - Barra de peligro (rect rojo que crece con danger_level 0–1)
+    - "Costo del Greedy: N pts" (Debe leerse dinámicamente)
+    - "Cooldown Backtracking: N turnos" (Debe mostrarse de forma muy explícita)
+    - "Sugerencia Greedy: (row, col)" o "Fuera de alcance"
+    - Controles: "Click=patch | Shift+Click=reforzar | G (Greedy) | B (Backtracking Preview) | ESC"
+
+- draw_tooltip(row, col, degree): texto pequeño con grado de conectividad.
+
+Actualiza main.py para llamar draw_hud() con valores de prueba.`
+    },
+    {
+      day: "Día 3",
+      title: "Highlights visuales: greedy y backtracking preview",
+      branch: "feature/visual-hints",
+      tags: ["Pygame","visual","highlights","preview","12x12"],
+      prompt: `Proyecto: Virus Defense — highlights visuales.
+renderer.py tiene draw_grid() y draw_hud().
+
+Agrega a Renderer:
+- draw_greedy_hint(row, col):
+  Borde dorado (3px, color (255,215,0)) sobre el nodo sugerido localmente.
+  Es un círculo adicional sobre el nodo vecino.
+
+- draw_backtracking_preview(nodes: list[tuple]):
+  Borde punteado azul sobre cada nodo del perímetro propuesto.
+  Solo se muestra si la lista no está vacía.
+
+- draw_infected_pulse(infected_nodes: list[tuple], tick: int):
+  Varía el radio de los nodos INFECTED en la grilla 12x12 según pygame.time.get_ticks()
+  para simular el efecto pulsante.
+
+Actualiza main.py para mostrar estos efectos con datos de prueba.`
+    },
+    {
+      day: "Día 4",
+      title: "Captura de eventos y acciones del jugador",
+      branch: "feature/player-input",
+      tags: ["Pygame","eventos","input","bridge"],
+      prompt: `Proyecto: Virus Defense — eventos del jugador.
+renderer.py completo, game/bridge/json_bridge.py disponible.
+
+En game/main.py implementa:
+- Mantener rastro del "current_node" del jugador (nodo actual que puede navegar, por ejemplo, inicializado en el centro o el último nodo interactuado).
+- Click izquierdo en nodo vecino → valida que esté en rango del Greedy local y sea HEALTHY → write_input("patch", (row,col), 1)
+- Shift + Click izq → write_input("reinforce", (row,col), 2)
+- Tecla G → Si el presupuesto >= greedy_cost → write_input("greedy", (row,col), greedy_cost)
+- Tecla B → Si backtracking_cooldown == 0 → activa/desactiva preview de backtracking. Si B confirma → write_input("backtracking", (-1,-1), backtracking_cost)
+- ESC → write_input("quit", (-1,-1), 0) y cierra.
+
+Feedback visual: al hacer click, el nodo seleccionado muestra un flash blanco por 150ms.
+Usa bridge para leer state.json cada frame.`
+    },
+    {
+      day: "Día 5",
+      title: "Loop principal integrado con bridge y algoritmos",
+      branch: "feature/main-loop",
+      tags: ["integración","main loop","Pygame","10 FPS","12x12"],
+      prompt: `Proyecto: Virus Defense — loop principal integrado.
+renderer.py, bridge y algoritmos listos en 12x12.
+
+Refactoriza game/main.py para el loop completo:
+1. read_state() → obtiene grid, turn, budget, greedy_cost, backtracking_cooldown.
+2. Determina la posición del jugador.
+3. greedy_suggestion = get_greedy_suggestion(grid, current_pos).
+4. Si backtracking activo y backtracking_cooldown == 0: perimeter = get_quarantine_perimeter(grid).
+5. Renderiza: draw_grid → draw_infected_pulse → draw_greedy_hint → draw_backtracking_preview → draw_hud.
+6. Captura eventos → write_input() según la acción verificando costos locales.
+7. Limita a 10 FPS con pygame.time.Clock().
+
+Game over: score < -200 o turn > 45 → pantalla "GAME OVER"
+Victoria: is_infected_cluster_empty(grid) → "¡Red protegida!"`
+    },
+    {
+      day: "Día 6",
+      title: "Prueba visual con el motor C++ activo",
+      branch: "feature/integration-test",
+      tags: ["integración","visual","debug","12x12"],
+      prompt: `Proyecto: Virus Defense — prueba visual integrada 12x12.
+El motor C++ debe estar corriendo en paralelo en grilla de 12x12.
+
+Tarea:
+1. Ejecuta main.py con el motor C++ activo simultáneamente.
+2. Verifica visualmente:
+   - Los nodos cambian de color correctamente en el mapa de 12x12.
+   - El HUD muestra los valores de coste creciente del Greedy y los turnos de cooldown del Backtracking de forma correcta.
+   - Al usar Greedy, el coste del HUD debe subir para el siguiente turno.
+   - Al usar Backtracking, el botón/cooldown debe bloquearse por 3 turnos.
+3. Documenta en un comentario en main.py cualquier desajuste.
+4. Coordina ajustes cruzados.`
+    },
+    {
+      day: "Día 7",
+      title: "Pantallas finales + README con instrucciones",
+      branch: "docs/ui-final",
+      tags: ["UI","pantallas","README","pulido","12x12"],
+      prompt: `Proyecto: Virus Defense — pantallas finales y documentación.
+
+1. En renderer.py agrega:
+   - draw_game_over(score): pantalla oscura con "GAME OVER", score final, "Presiona R para reiniciar o ESC para salir".
+   - draw_victory(turn): "¡Red protegida!", turnos usados, opción reinicio.
+
+2. En main.py:
+   - Tecla R → reinicia el juego (escribe estado inicial de 12x12 con valores iniciales de coste Greedy=1, cooldown=0 en JSON).
+   - Si el motor C++ no está corriendo, usa estado hardcodeado (no crash).
+
+3. Actualiza README.md con:
+   - "Cómo ejecutar": pasos para compilar el motor C++ y correr Python.
+   - "Controles": tabla con Click, Shift+Click, G, B, ESC.
+   - "Balance de habilidades": explicación de la grilla 12x12, el costo creciente del Greedy Local y el cooldown/costo por perímetro de Backtracking.`
+    }
+  ]
+};
+
+function render(person, color) {
+  const container = document.getElementById(`cards-${person}`);
+  container.innerHTML = data[person].map((d, i) => `
+    <div class="day-card ${person}" id="card-${person}-${i}">
+      <div class="day-card-head" onclick="toggle('${person}',${i})">
+        <span class="day-num-badge">${d.day}</span>
+        <span class="day-card-title">${d.title}</span>
+        <span class="branch-tag">${d.branch}</span>
+        <span class="chevron" id="chev-${person}-${i}">▼</span>
+      </div>
+      <div class="day-card-body" id="body-${person}-${i}">
+        <div class="tag-row">${d.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+        <div class="prompt-label">Prompt para la IA</div>
+        <div class="prompt-block">
+          <div class="prompt-text" id="pt-${person}-${i}">${d.prompt}</div>
+          <button class="copy-btn" onclick="copy('pt-${person}-${i}', this)">Copiar</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggle(person, i) {
+  const body = document.getElementById(`body-${person}-${i}`);
+  const chev = document.getElementById(`chev-${person}-${i}`);
+  const open = body.classList.toggle('open');
+  chev.style.transform = open ? 'rotate(180deg)' : '';
+}
+
+function copy(id, btn) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Copiado';
+    setTimeout(() => btn.textContent = 'Copiar', 1500);
+  });
+}
+
+render('luis');
+render('mj');
+render('alicia');
+</script>
+</body>
+</html>

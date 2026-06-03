@@ -1,0 +1,3 @@
+C:/Users/user/OneDrive/Documentos/pruebaCC1final/virus-defense-cc1/enginebuild/CMakeFiles/virus_engine.dir
+C:/Users/user/OneDrive/Documentos/pruebaCC1final/virus-defense-cc1/enginebuild/CMakeFiles/edit_cache.dir
+C:/Users/user/OneDrive/Documentos/pruebaCC1final/virus-defense-cc1/enginebuild/CMakeFiles/rebuild_cache.dir

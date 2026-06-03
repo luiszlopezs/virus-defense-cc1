@@ -1,0 +1,11 @@
+cluster_size,algorithm,avg_time_us,max_time_us,min_time_us,iterations,status
+1,greedy,14.2,54.5,13.0,1000,PASS
+1,backtracking,372.4,730.3,289.7,100,PASS
+3,greedy,20.3,340.8,11.8,1000,PASS
+3,backtracking,683.1,1061.5,390.6,100,PASS
+5,greedy,23.4,123.1,12.3,1000,PASS
+5,backtracking,1447.4,2155.4,803.3,100,PASS
+8,greedy,26.7,172.1,12.4,1000,PASS
+8,backtracking,5948.6,10423.8,4796.3,100,PASS
+12,greedy,16.1,92.6,11.9,1000,PASS
+12,backtracking,48728.0,72242.5,35061.9,100,PASS
